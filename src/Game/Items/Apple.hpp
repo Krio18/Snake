@@ -6,18 +6,16 @@
     Étudiant 2ᵉ année à Epitech,
     Eurpean Institute of Technology
 */
+
 #pragma once
 
 #include <SDL2/SDL.h>
-#include "Key.hpp"
+#include <stdlib.h>
+#include "../Snake/Snake.hpp"
 
-
-class Config {
+class Apple {
     public:
-        ~Config() = default;
+        ~Apple() = default;
 
-        Key getKey(SDL_Event event);
-
-    private:
-        Key _Key;
+        Position spawnFood(const int WIDTH, const int HEIGHT, const int CELL_SIZE);
 };

@@ -1,71 +1,133 @@
+/*
+    Auteur: Killian Cottrelle
+    Email: killian.cottrelle@epitech.eu
+    Nom: Cottrelle
+    Prénom: Killian
+    Étudiant 2ᵉ année à Epitech,
+    Eurpean Institute of Technology
+*/
+
 #include "Window.hpp"
 
+/**
+ * @brief Construct a new Window:: Window object
+ */
 Window::Window()
 {
+    _RUNNING = true;
+    srand(time(NULL));
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) != 0) {
         printf("Error initializing SDL : %s\n", SDL_GetError());
         exit(84);
     }
 
-    _window = SDL_CreateWindow("Snake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480,
-    SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALWAYS_ON_TOP);
+    _window = SDL_CreateWindow("_snake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _WINDOW_WIDTH, _WINDOW_HEIGHT, 0);
     if (!_window) {
         std::cerr << "Error creating window : " << SDL_GetError() << std::endl;
         SDL_Quit();
         exit(84);
     }
 
-    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
     if (_renderer == NULL) {
         std::cerr << "Error creating render : " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(_window);
-        TTF_Quit();
         SDL_Quit();
         exit(84);
     }
 
-    _messageTexture = nullptr;
+    _snake.push_back(Position(_WINDOW_WIDTH / 2, _WINDOW_HEIGHT / 2));
+    _food = _Apple.spawnFood(_WINDOW_WIDTH, _WINDOW_HEIGHT, _CELL_SIZE);
+    _Key = static_cast<Key>(rand() % 4);
 }
 
+/**
+ * @brief Destroy the Window:: Window object
+ */
 Window::~Window()
 {
-    SDL_DestroyWindow(_window);
     SDL_DestroyRenderer(_renderer);
-    if (_messageTexture != nullptr) {
-        SDL_DestroyTexture(_messageTexture);
-    }
+    SDL_DestroyWindow(_window);
     SDL_Quit();
 }
 
-void Window::loopGame() {
-    bool quit = false;
-    SDL_Event event;
-    while (!quit) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                quit = true;
-            }
-            if (event.type == SDL_KEYDOWN) {
-                Config::Key key = _config.getKey(event);
-                _messageTexture = _config.displayMessage(key, _window, _renderer);
-            }
+/**
+ * @brief
+ */
+void Window::update()
+{
+    for (int i = _snake.size() - 1; i > 0; --i)
+        _snake[i] = _snake[i - 1];
+
+    switch (_Key) {
+        case UP:
+            _snake[0].y -= _CELL_SIZE;
+            break;
+        case DOWN:
+            _snake[0].y += _CELL_SIZE;
+            break;
+        case LEFT:
+            _snake[0].x -= _CELL_SIZE;
+            break;
+        case RIGHT:
+            _snake[0].x += _CELL_SIZE;
+            break;
+    }
+
+    if (_snake[0].x == _food.x && _snake[0].y == _food.y) {
+        _snake.push_back(_snake[_snake.size() - 1]);
+        _food = _Apple.spawnFood(_WINDOW_WIDTH, _WINDOW_HEIGHT, _CELL_SIZE);
+    } else {
+        if (_snake[0].x < 0 || _snake[0].x >= _WINDOW_WIDTH || _snake[0].y < 0 || _snake[0].y >= _WINDOW_HEIGHT) {
+            _RUNNING = false;
+            return;
         }
 
-        SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
-        SDL_RenderClear(_renderer);
-
-
-        if (_messageTexture != nullptr) {
-            SDL_Rect destRect;
-            destRect.x = 200;
-            destRect.y = 100;
-            destRect.w = 200;
-            destRect.h = 200;
-            SDL_RenderCopy(_renderer, _messageTexture, NULL, &destRect);
+        for (size_t i = 1; i < _snake.size(); ++i) {
+            if (_snake[0].x == _snake[i].x && _snake[0].y == _snake[i].y) {
+                _RUNNING = false;
+                return;
+            }
         }
+    }
+}
 
-        SDL_RenderPresent(_renderer);
+/**
+ * @brief
+ */
+void Window::render()
+{
+    SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(_renderer);
 
-        SDL_Delay(16);
+    SDL_SetRenderDrawColor(_renderer, 0, 255, 0, 255);
+    for (const auto& segment : _snake) {
+        SDL_Rect rect = {segment.x, segment.y, _CELL_SIZE, _CELL_SIZE};
+        SDL_RenderFillRect(_renderer, &rect);
+    }
+
+    SDL_SetRenderDrawColor(_renderer, 255, 0, 0, 255);
+    SDL_Rect _foodRect = {_food.x, _food.y, _CELL_SIZE, _CELL_SIZE};
+    SDL_RenderFillRect(_renderer, &_foodRect);
+
+    SDL_RenderPresent(_renderer);
+}
+
+/**
+ * @brief
+ */
+void Window::run()
+{
+    while (_RUNNING) {
+        while (SDL_PollEvent(&_event)) {
+            if (_event.type == SDL_QUIT)
+                _RUNNING = false;
+            if (_event.type == SDL_KEYDOWN)
+                _Key = _config.getKey(_event);
+        }
+        update();
+        render();
+        SDL_Delay(100);
     }
 }

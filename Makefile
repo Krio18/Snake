@@ -2,9 +2,9 @@ SRC	=	$(shell find . -name '*.cpp')
 
 OBJ	=	$(SRC:.cpp=.o)
 
-NAME = Snake
+NAME = SnakeGame
 
-FLAGS += -g3 -Wall -lSDL2 -lSDL2_ttf
+FLAGS += -g3 -Wall -lSDL2
 
 all:	$(NAME)
 
