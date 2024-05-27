@@ -11,7 +11,7 @@ Snake Game est une implémentation du jeu classique Snake en C++ avec la bibliot
 
 ## Installation
 1. Assurez-vous d'avoir SDL installé sur votre système.
-2. Clonez ce dépôt GitHub : `git clone https://github.com/votre-utilisateur/snake-game.git`
+2. Clonez ce dépôt GitHub : `git clone https://github.com/Krio18/snake-game.git`
 3. Compilez le code source : `make`
 4. Exécutez le jeu : `./SnakeGame`
 
